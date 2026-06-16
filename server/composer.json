@@ -1,0 +1,21 @@
+{
+    "name": "sensorario/tracker-server",
+    "type": "project",
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^11"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tracker\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tracker\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    }
+}

@@ -1,0 +1,327 @@
+openapi: 3.0.3
+info:
+  title: Tracker API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+paths:
+
+  # ── Pomodoros ──────────────────────────────────────────────────────────────
+
+  /pomodoros:
+    get:
+      summary: List all pomodoros
+      operationId: listPomodoros
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pomodoro'
+
+    post:
+      summary: Create a pomodoro
+      operationId: createPomodoro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PomodoroWrite'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pomodoro'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /pomodoros/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+
+    get:
+      summary: Get a pomodoro
+      operationId: getPomodoro
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pomodoro'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Replace a pomodoro
+      operationId: replacePomodoro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PomodoroWrite'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pomodoro'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    patch:
+      summary: Partially update a pomodoro
+      operationId: patchPomodoro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PomodoroPartial'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pomodoro'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete a pomodoro
+      operationId: deletePomodoro
+      responses:
+        '204':
+          description: No Content
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Tasks ──────────────────────────────────────────────────────────────────
+
+  /tasks:
+    get:
+      summary: List all tasks
+      operationId: listTasks
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+    post:
+      summary: Create a task
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskWrite'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tasks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+
+    get:
+      summary: Get a task
+      operationId: getTask
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Replace a task
+      operationId: replaceTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskWrite'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    patch:
+      summary: Partially update a task
+      operationId: patchTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskPartial'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete a task
+      operationId: deleteTask
+      responses:
+        '204':
+          description: No Content
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+
+  schemas:
+
+    Pomodoro:
+      type: object
+      required: [id, started_at, description]
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          example: 1
+        started_at:
+          type: string
+          format: date-time
+          example: '2026-06-11T13:18:20Z'
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-06-11T13:43:20Z'
+        description:
+          type: string
+          example: 'Crea una applicazione per gestire pomodori.'
+
+    PomodoroWrite:
+      type: object
+      required: [started_at, description]
+      properties:
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        description:
+          type: string
+          minLength: 1
+
+    PomodoroPartial:
+      type: object
+      properties:
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        description:
+          type: string
+          minLength: 1
+
+    Task:
+      type: object
+      required: [id, description]
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          example: 3
+        description:
+          type: string
+          example: 'Delete inventory task when started'
+
+    TaskWrite:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+          minLength: 1
+
+    TaskPartial:
+      type: object
+      properties:
+        description:
+          type: string
+          minLength: 1
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+  responses:
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Not Found
+
+    ValidationError:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Validation failed
