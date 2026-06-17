@@ -5,7 +5,8 @@ const MS_25_MIN = 25 * 60 * 1000
 function groupByDay(pomodoros) {
   const groups = {}
   for (const p of pomodoros) {
-    const day = p.started_at.slice(0, 10)
+    const d = new Date(p.started_at)
+    const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
     if (!groups[day]) groups[day] = []
     groups[day].push(p)
   }
@@ -13,7 +14,8 @@ function groupByDay(pomodoros) {
 }
 
 function formatTime(iso) {
-  return iso.slice(11, 16)
+  const d = new Date(iso)
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 function pad(n) {
