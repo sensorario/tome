@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 const MS_25_MIN = 25 * 60 * 1000
 const AUTH_URL = 'https://api.simonegentili.com/quadrato/authenticate'
 const DATA_URL = 'https://api.simonegentili.com/quadrato/data'
+const WORKSPACES_URL = 'https://api.simonegentili.com/quadrato/workspaces'
+const SET_WORKSPACE_URL = 'https://api.simonegentili.com/quadrato/workspace/current'
 const TOKEN_KEY = 'quadrato_token'
 
 function groupByDay(timeboxes) {
@@ -176,6 +178,103 @@ function TaskModal({ tasks, canStart, onStart, onClose }) {
   )
 }
 
+function WorkspaceModal({ workspaces, token, onClose, onSwitch }) {
+  const [loading, setLoading] = useState(null)
+  const [search, setSearch] = useState('')
+
+  const filtered = workspaces.filter((ws) =>
+    ws.name.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const handleKey = (e) => {
+    if (e.key === 'Escape') onClose()
+  }
+
+  const handleSelect = async (name) => {
+    setLoading(name)
+    try {
+      await fetch(SET_WORKSPACE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: token },
+        body: JSON.stringify({ name }),
+      })
+      onSwitch()
+    } finally {
+      setLoading(null)
+      onClose()
+    }
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      onKeyDown={handleKey}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#fff', borderRadius: 8, padding: '1.5rem',
+          width: '90%', maxWidth: 560, maxHeight: '80vh',
+          display: 'flex', flexDirection: 'column',
+          boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <h2 style={{ margin: 0 }}>Workspace</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1 }}>×</button>
+        </div>
+        <input
+          autoFocus
+          type="text"
+          placeholder="Cerca workspace…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ padding: '0.5rem', fontSize: '1rem', marginBottom: '1rem', borderRadius: 4, border: '1px solid #ccc' }}
+        />
+        <ul style={{ paddingLeft: 0, listStyle: 'none', margin: 0, overflowY: 'auto', flex: 1 }}>
+          {filtered.length === 0 && (
+            <li style={{ color: '#999', padding: '0.5rem 0' }}>Nessun workspace trovato</li>
+          )}
+          {filtered.map((ws) => (
+            <li
+              key={ws.id ?? ws.name}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '0.5rem 0.5rem', borderBottom: '1px solid #eee',
+                background: ws.current ? '#f0f8ff' : 'transparent',
+              }}
+            >
+              <div>
+                <span style={{ fontWeight: ws.current ? 700 : 400 }}>{ws.name}</span>
+                {ws.current && <span style={{ marginLeft: 6, fontSize: '0.75rem', color: '#666' }}>(corrente)</span>}
+                <div style={{ fontSize: '0.78rem', color: '#888', marginTop: 2 }}>
+                  {ws.tasks_count} task
+                  {ws.tasks_expired > 0 && <span style={{ color: '#c00', marginLeft: 6 }}>{ws.tasks_expired} scadut{ws.tasks_expired === 1 ? 'o' : 'i'}</span>}
+                </div>
+              </div>
+              <button
+                onClick={() => handleSelect(ws.name)}
+                disabled={ws.current || loading !== null}
+                style={{
+                  fontSize: '0.85rem', padding: '0.25rem 0.75rem', marginLeft: '1rem',
+                  cursor: ws.current || loading !== null ? 'default' : 'pointer',
+                  opacity: ws.current ? 0.4 : 1,
+                }}
+              >
+                {loading === ws.name ? '…' : 'Seleziona'}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [timeboxes, setTimeboxes] = useState([])
   const [now, setNow] = useState(Date.now())
@@ -183,8 +282,10 @@ export default function App() {
   const [editValue, setEditValue] = useState('')
   const [showLogin, setShowLogin] = useState(false)
   const [showTasks, setShowTasks] = useState(false)
+  const [showWorkspaces, setShowWorkspaces] = useState(false)
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [tasks, setTasks] = useState([])
+  const [workspaces, setWorkspaces] = useState([])
 
   const fetchTasks = async (tok) => {
     try {
@@ -197,6 +298,17 @@ export default function App() {
     }
   }
 
+  const fetchWorkspaces = async (tok) => {
+    try {
+      const res = await fetch(WORKSPACES_URL, { headers: { Authorization: tok } })
+      if (!res.ok) return
+      const data = await res.json()
+      setWorkspaces(data.workspaces ?? [])
+    } catch {
+      // silently fail
+    }
+  }
+
   const load = () =>
     fetch('/api/timeboxes')
       .then((r) => r.json())
@@ -205,7 +317,10 @@ export default function App() {
   useEffect(() => { load() }, [])
 
   useEffect(() => {
-    if (token) fetchTasks(token)
+    if (token) {
+      fetchTasks(token)
+      fetchWorkspaces(token)
+    }
   }, [token])
 
   useEffect(() => {
@@ -258,6 +373,7 @@ export default function App() {
     localStorage.removeItem(TOKEN_KEY)
     setToken(null)
     setTasks([])
+    setWorkspaces([])
   }
 
   const groups = groupByDay(timeboxes)
@@ -267,6 +383,14 @@ export default function App() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h1 style={{ margin: 0 }}>Tracker</h1>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {token && workspaces.length > 0 && (
+            <button
+              onClick={() => setShowWorkspaces(true)}
+              style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}
+            >
+              {workspaces.find((w) => w.current)?.name ?? 'Workspace'}
+            </button>
+          )}
           {token && tasks.length > 0 && (
             <button
               onClick={() => setShowTasks(true)}
@@ -291,6 +415,15 @@ export default function App() {
         <LoginModal
           onClose={() => setShowLogin(false)}
           onSuccess={handleLoginSuccess}
+        />
+      )}
+
+      {showWorkspaces && (
+        <WorkspaceModal
+          workspaces={workspaces}
+          token={token}
+          onClose={() => setShowWorkspaces(false)}
+          onSwitch={() => { fetchWorkspaces(token); fetchTasks(token) }}
         />
       )}
 
