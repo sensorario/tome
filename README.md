@@ -1,10 +1,10 @@
 # Tracker
 
-A Pomodoro timer and session tracker. Start 25-minute focus sessions, enforce cooldown between them, and keep a running history with optional notes.
+A timebox tracker. Start 25-minute focus sessions, enforce cooldown between them, and keep a running history with optional notes.
 
 ## What it does
 
-- **Start a Pomodoro** — clicking the button creates a new session; the server enforces a 25-minute cooldown so you can't stack sessions back-to-back
+- **Start a Timebox** — clicking the button creates a new session; the server enforces a 25-minute cooldown so you can't stack sessions back-to-back
 - **Countdown** — while a session is cooling down, the UI shows a live MM:SS countdown until the next one is available
 - **Session history** — all past sessions are listed grouped by day, most recent first
 - **Notes** — double-click any session to add or edit a description; press Enter to save or Escape to cancel
@@ -42,8 +42,8 @@ All routes are prefixed `/api` in the browser (Vite proxies to `:8000`).
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/pomodoros` | List all sessions, newest first |
-| `POST` | `/pomodoros` | Start a new session (409 if cooldown active) |
-| `PATCH` | `/pomodoros/:id` | Update a session's description |
+| `GET` | `/timeboxes` | List all sessions, newest first |
+| `POST` | `/timeboxes` | Start a new session (409 if cooldown active) |
+| `PATCH` | `/timeboxes/:id` | Update a session's description |
 
 A 409 response includes `seconds_remaining` so the client can display the countdown.

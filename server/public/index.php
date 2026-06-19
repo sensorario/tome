@@ -22,15 +22,15 @@ $router = new Router();
 
 $router->get('/', fn() => ['message' => 'Tracker API', 'version' => '1.0.0']);
 
-$router->get('/pomodoros', function () use ($db): array {
+$router->get('/timeboxes', function () use ($db): array {
     return $db
-        ->query('SELECT id, started_at, description FROM pomodoros ORDER BY started_at DESC')
+        ->query('SELECT id, started_at, description FROM timeboxes ORDER BY started_at DESC')
         ->fetchAll();
 });
 
-$router->post('/pomodoros', function () use ($db): array {
+$router->post('/timeboxes', function () use ($db): array {
     $last = $db
-        ->query('SELECT started_at FROM pomodoros ORDER BY started_at DESC LIMIT 1')
+        ->query('SELECT started_at FROM timeboxes ORDER BY started_at DESC LIMIT 1')
         ->fetch();
 
     if ($last) {
@@ -47,7 +47,7 @@ $router->post('/pomodoros', function () use ($db): array {
     $startedAt = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z');
     $description = trim($body['description'] ?? '');
 
-    $stmt = $db->prepare('INSERT INTO pomodoros (started_at, description) VALUES (?, ?)');
+    $stmt = $db->prepare('INSERT INTO timeboxes (started_at, description) VALUES (?, ?)');
     $stmt->execute([$startedAt, $description]);
 
     return ['status' => 201, 'body' => [
@@ -57,12 +57,12 @@ $router->post('/pomodoros', function () use ($db): array {
     ]];
 });
 
-$router->patch('/pomodoros/:id', function (array $params) use ($db): array {
+$router->patch('/timeboxes/:id', function (array $params) use ($db): array {
     $id = (int) $params['id'];
     $body = json_decode(file_get_contents('php://input'), true) ?? [];
     $description = trim($body['description'] ?? '');
 
-    $stmt = $db->prepare('UPDATE pomodoros SET description = ? WHERE id = ?');
+    $stmt = $db->prepare('UPDATE timeboxes SET description = ? WHERE id = ?');
     $stmt->execute([$description, $id]);
 
     if ($stmt->rowCount() === 0) {
