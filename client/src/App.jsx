@@ -292,7 +292,7 @@ export default function App() {
       const res = await fetch(DATA_URL, { headers: { Authorization: tok } })
       if (!res.ok) return
       const data = await res.json()
-      setTasks(data['simplanner-tasks'] ?? [])
+      setTasks((data['simplanner-tasks'] ?? []).filter((t) => !t.archived))
     } catch {
       // silently fail — tasks are optional
     }
