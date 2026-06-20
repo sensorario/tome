@@ -445,36 +445,42 @@ export default function App() {
         </button>
       </div>
 
-      {Object.entries(groups).map(([day, items]) => (
-        <section key={day} style={{ marginTop: '2rem' }}>
-          <h2>{day} — {items.length} timebox{items.length === 1 ? '' : 'es'}</h2>
-          <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
-            {items.map((p) => (
-              <li
-                key={p.id}
-                onDoubleClick={() => startEdit(p)}
-                style={{ cursor: 'pointer', padding: '0.25rem 0.5rem', borderRadius: 4 }}
-              >
-                {editingId === p.id ? (
-                  <>
-                    <span style={{ marginRight: '0.5rem' }}>{formatTime(p.started_at)} —</span>
-                    <input
-                      autoFocus
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, p.id)}
-                      onBlur={() => setEditingId(null)}
-                      style={{ fontSize: 'inherit', width: '60%' }}
-                    />
-                  </>
-                ) : (
-                  <>{formatTime(p.started_at)}{p.description ? ` — ${p.description}` : ''}</>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+      {Object.entries(groups)
+        .sort((a, b) => {
+          // Inverte "DD-MM-YYYY" in "YYYYMMDD" per un confronto testuale diretto
+          const keyA = a[0].split('-').reverse().join('');
+          const keyB = b[0].split('-').reverse().join('');
+          return keyB.localeCompare(keyA); // Decrescente
+        }).map(([day, items]) => (
+          <section key={day} style={{ marginTop: '2rem' }}>
+            <h2>{day} — {items.length} timebox{items.length === 1 ? '' : 'es'}</h2>
+            <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
+              {items.map((p) => (
+                <li
+                  key={p.id}
+                  onDoubleClick={() => startEdit(p)}
+                  style={{ cursor: 'pointer', padding: '0.25rem 0.5rem', borderRadius: 4 }}
+                >
+                  {editingId === p.id ? (
+                    <>
+                      <span style={{ marginRight: '0.5rem' }}>{formatTime(p.started_at)} —</span>
+                      <input
+                        autoFocus
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, p.id)}
+                        onBlur={() => setEditingId(null)}
+                        style={{ fontSize: 'inherit', width: '60%' }}
+                      />
+                    </>
+                  ) : (
+                    <>{formatTime(p.started_at)}{p.description ? ` — ${p.description}` : ''}</>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
     </div>
   )
 }
