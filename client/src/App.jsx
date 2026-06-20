@@ -310,7 +310,7 @@ export default function App() {
   }
 
   const load = () =>
-    fetch('/api/timeboxes')
+    fetch('https://api.simonegentili.com/tome/timeboxes')
       .then((r) => r.json())
       .then(setTimeboxes)
 
@@ -329,13 +329,16 @@ export default function App() {
   }, [])
 
   const last = timeboxes[0]
+
   const elapsed = last ? now - new Date(last.started_at).getTime() : Infinity
   const canStart = elapsed >= MS_25_MIN
   const remaining = canStart ? 0 : Math.ceil((MS_25_MIN - elapsed) / 1000)
   const countdown = `${pad(Math.floor(remaining / 60))}:${pad(remaining % 60)}`
 
+  console.log({ canStart })
+
   const start = async (description = '') => {
-    await fetch('/api/timeboxes', {
+    await fetch('https://api.simonegentili.com/tome/timeboxes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ description }),
@@ -349,7 +352,7 @@ export default function App() {
   }
 
   const saveEdit = async (id) => {
-    await fetch(`/api/timeboxes/${id}`, {
+    await fetch(`https://api.simonegentili.com/tome/timeboxes/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ description: editValue }),
