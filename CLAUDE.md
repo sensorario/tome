@@ -4,25 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Structure
 
-```
-client/   React + Vite frontend
-server/   Vanilla PHP backend (no framework)
-```
+React + Vite frontend at the root. Connects to external APIs.
 
 ## Commands
 
 ```bash
-make install   # installa dipendenze server e client
-make start     # avvia server (porta 8000) e client (Vite) in parallelo — Ctrl+C per fermare
-make test      # esegue PHPUnit
-make server    # solo server PHP
-make client    # solo client Vite
+npm install   # install dependencies
+npm run dev   # start Vite dev server
+npm run build # production build
 ```
-
-Note: `composer` non è nel PATH — il Makefile usa `/tmp/composer` (scaricato al primo setup).
-
-## Architecture
-
-**Server** — `server/src/Router.php` is a minimal router: register handlers with `->get(path, callable)`, dispatch with `->dispatch(method, path)` returning `['status' => int, 'body' => array]`. `public/index.php` wires it and writes JSON. Tests exercise the Router class directly (no HTTP layer).
-
-**Client** — Vite proxies `/api/*` to `http://localhost:8000` stripping the `/api` prefix, so `fetch('/api/')` hits the PHP `/` route. `App.jsx` fetches on mount and renders the response.
