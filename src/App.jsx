@@ -1,3 +1,4 @@
+import { SGFooter } from '@sensorario/sg-components'
 import { useEffect, useState } from 'react'
 
 const MS_25_MIN = 25 * 60 * 1000
@@ -317,7 +318,7 @@ export default function App() {
   }
 
   const load = () =>
-    fetch('https://api.simonegentili.com/tome/timeboxes')
+    fetch('https://api.simonegentili.com/tome/timeboxes', { headers: { Authorization: token } })
       .then((r) => r.json())
       .then(setTimeboxes)
 
@@ -386,108 +387,111 @@ export default function App() {
     setWorkspaces([])
   }
 
-  const groups = token ? groupByDay(timeboxes) : []
+  const groups = token ? groupByDay(timeboxes) : {};
 
   return (
-    <div style={{ fontFamily: 'sans-serif', maxWidth: 600, margin: '2rem auto', padding: '0 1rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>Tracker</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {token && workspaces.length > 0 && (
-            <button
-              onClick={() => setShowWorkspaces(true)}
-              style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}
-            >
-              {workspaces.find((w) => w.current)?.name ?? 'Workspace'}
-            </button>
-          )}
-          {token && tasks.length > 0 && (
-            <button
-              onClick={() => setShowTasks(true)}
-              style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}
-            >
-              Task ({tasks.length})
-            </button>
-          )}
-          {token ? (
-            <button onClick={handleLogout} style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}>
-              Logout
-            </button>
-          ) : (
-            <button onClick={() => setShowLogin(true)} style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}>
-              Login
-            </button>
-          )}
+    <>
+      <div style={{ fontFamily: 'sans-serif', maxWidth: 600, margin: '2rem auto', padding: '0 1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h1 style={{ margin: 0 }}>Tracker</h1>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {token && workspaces.length > 0 && (
+              <button
+                onClick={() => setShowWorkspaces(true)}
+                style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}
+              >
+                {workspaces.find((w) => w.current)?.name ?? 'Workspace'}
+              </button>
+            )}
+            {token && tasks.length > 0 && (
+              <button
+                onClick={() => setShowTasks(true)}
+                style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}
+              >
+                Task ({tasks.length})
+              </button>
+            )}
+            {token ? (
+              <button onClick={handleLogout} style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}>
+                Logout
+              </button>
+            ) : (
+              <button onClick={() => setShowLogin(true)} style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}>
+                Login
+              </button>
+            )}
+          </div>
         </div>
+
+        {showLogin && (
+          <LoginModal
+            onClose={() => setShowLogin(false)}
+            onSuccess={handleLoginSuccess}
+          />
+        )}
+
+        {showWorkspaces && (
+          <WorkspaceModal
+            workspaces={workspaces}
+            token={token}
+            onClose={() => setShowWorkspaces(false)}
+            onSwitch={() => { fetchWorkspaces(token); fetchTasks(token) }}
+          />
+        )}
+
+        {showTasks && (
+          <TaskModal
+            tasks={tasks}
+            canStart={canStart}
+            onStart={start}
+            onClose={() => setShowTasks(false)}
+          />
+        )}
+
+        <div style={{ marginTop: '1.5rem' }}>
+          <button onClick={() => start()} disabled={!canStart} style={{ fontSize: '1rem', padding: '0.5rem 1.5rem' }}>
+            {canStart ? 'Start Timebox' : `Wait ${countdown}`}
+          </button>
+        </div>
+
+        {Object.entries(groups)
+          .sort((a, b) => {
+            // Inverte "DD-MM-YYYY" in "YYYYMMDD" per un confronto testuale diretto
+            const keyA = a[0].split('-').reverse().join('');
+            const keyB = b[0].split('-').reverse().join('');
+            return keyB.localeCompare(keyA); // Decrescente
+          }).map(([day, items]) => (
+            <section key={day} style={{ marginTop: '2rem' }}>
+              <h2>{day} — {items.length} timebox{items.length === 1 ? '' : 'es'}</h2>
+              <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
+                {items.map((p) => (
+                  <li
+                    key={p.id}
+                    onDoubleClick={() => startEdit(p)}
+                    style={{ cursor: 'pointer', padding: '0.25rem 0.5rem', borderRadius: 4 }}
+                  >
+                    {editingId === p.id ? (
+                      <>
+                        <span style={{ marginRight: '0.5rem' }}>{formatTime(p.started_at)} —</span>
+                        <input
+                          autoFocus
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, p.id)}
+                          onBlur={() => setEditingId(null)}
+                          style={{ fontSize: 'inherit', width: '60%' }}
+                        />
+                      </>
+                    ) : (
+                      <>{formatTime(p.started_at)}{p.description ? ` — ${p.description}` : ''}</>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
       </div>
-
-      {showLogin && (
-        <LoginModal
-          onClose={() => setShowLogin(false)}
-          onSuccess={handleLoginSuccess}
-        />
-      )}
-
-      {showWorkspaces && (
-        <WorkspaceModal
-          workspaces={workspaces}
-          token={token}
-          onClose={() => setShowWorkspaces(false)}
-          onSwitch={() => { fetchWorkspaces(token); fetchTasks(token) }}
-        />
-      )}
-
-      {showTasks && (
-        <TaskModal
-          tasks={tasks}
-          canStart={canStart}
-          onStart={start}
-          onClose={() => setShowTasks(false)}
-        />
-      )}
-
-      <div style={{ marginTop: '1.5rem' }}>
-        <button onClick={() => start()} disabled={!canStart} style={{ fontSize: '1rem', padding: '0.5rem 1.5rem' }}>
-          {canStart ? 'Start Timebox' : `Wait ${countdown}`}
-        </button>
-      </div>
-
-      {Object.entries(groups)
-        .sort((a, b) => {
-          // Inverte "DD-MM-YYYY" in "YYYYMMDD" per un confronto testuale diretto
-          const keyA = a[0].split('-').reverse().join('');
-          const keyB = b[0].split('-').reverse().join('');
-          return keyB.localeCompare(keyA); // Decrescente
-        }).map(([day, items]) => (
-          <section key={day} style={{ marginTop: '2rem' }}>
-            <h2>{day} — {items.length} timebox{items.length === 1 ? '' : 'es'}</h2>
-            <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
-              {items.map((p) => (
-                <li
-                  key={p.id}
-                  onDoubleClick={() => startEdit(p)}
-                  style={{ cursor: 'pointer', padding: '0.25rem 0.5rem', borderRadius: 4 }}
-                >
-                  {editingId === p.id ? (
-                    <>
-                      <span style={{ marginRight: '0.5rem' }}>{formatTime(p.started_at)} —</span>
-                      <input
-                        autoFocus
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, p.id)}
-                        onBlur={() => setEditingId(null)}
-                        style={{ fontSize: 'inherit', width: '60%' }}
-                      />
-                    </>
-                  ) : (
-                    <>{formatTime(p.started_at)}{p.description ? ` — ${p.description}` : ''}</>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-    </div>
+      <SGFooter />
+    </>
   )
 }

@@ -1,0 +1,20 @@
+{
+  "name": "tracker-client",
+  "version": "1.0.2",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "npm version patch --no-git-tag-version",
+    "build": "vite build",
+    "postbuild": "cp .htaccess dist/.htaccess",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2"
+  }
+}
