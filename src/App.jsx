@@ -1,4 +1,4 @@
-import { SGFooter } from '@sensorario/sg-components'
+import { SGFooter, Authenticator } from '@sensorario/sg-components'
 import { useEffect, useState } from 'react'
 
 const MS_25_MIN = 25 * 60 * 1000
@@ -411,15 +411,11 @@ export default function App() {
                 Task ({tasks.length})
               </button>
             )}
-            {token ? (
-              <button onClick={handleLogout} style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}>
-                Logout
-              </button>
-            ) : (
-              <button onClick={() => setShowLogin(true)} style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}>
-                Login
-              </button>
-            )}
+            <Authenticator
+              isLoggedIn={!!token}
+              handleLogin={() => setShowLogin(true)}
+              handleLogout={handleLogout}
+            />
           </div>
         </div>
 
