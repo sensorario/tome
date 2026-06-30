@@ -425,7 +425,7 @@ export default function App() {
     const start = async (description = '') => {
         await fetch('https://api.simonegentili.com/tome/timeboxes', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', Authorization: token},
             body: JSON.stringify({description}),
         })
         load()
