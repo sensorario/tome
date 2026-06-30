@@ -6,15 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="1e007dfb-a360-4b8f-9711-e67ef9668163" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/.package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/.vite/deps/@sensorario_sg-components.js" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/.vite/deps/@sensorario_sg-components.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/.vite/deps/@sensorario_sg-components.js.map" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/.vite/deps/@sensorario_sg-components.js.map" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/.vite/deps/_metadata.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/.vite/deps/_metadata.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/@sensorario/sg-components/dist/index.es.js" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/@sensorario/sg-components/dist/index.es.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/@sensorario/sg-components/dist/sg-components.css" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/@sensorario/sg-components/dist/sg-components.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/@sensorario/sg-components/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/@sensorario/sg-components/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
