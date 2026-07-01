@@ -466,6 +466,7 @@ export default function App() {
 
     const groups = token ? groupByDay(timeboxes) : {}
     const todayKey = `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}-${pad(new Date().getDate())}`
+    if (token && !(todayKey in groups)) groups[todayKey] = []
 
     return (
         <>
@@ -556,11 +557,8 @@ export default function App() {
                 </div>
 
                 {Object.entries(groups)
-                    .sort((a, b) => {
-                        const keyA = a[0].split('-').reverse().join('')
-                        const keyB = b[0].split('-').reverse().join('')
-                        return keyB.localeCompare(keyA)
-                    }).map(([day, items]) => (
+                    .sort((a, b) => b[0].localeCompare(a[0]))
+                    .map(([day, items]) => (
                         <section key={day} style={{marginTop: '8px'}}>
                             {day === todayKey ? (
                                 <>
