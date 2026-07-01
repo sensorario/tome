@@ -392,17 +392,23 @@ export default function App() {
     }
   }
 
-  const load = () =>
-    fetch('https://api.simonegentili.com/tome/timeboxes', { headers: { Authorization: token } })
-      .then((r) => r.json())
-      .then(setTimeboxes)
-
-  useEffect(() => {
-    load()
-  }, [])
+  const load = async (tok) => {
+    if (!tok) return
+    try {
+      const res = await fetch('https://api.simonegentili.com/tome/timeboxes', {
+        headers: { Authorization: tok },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setTimeboxes(Array.isArray(data) ? data : [])
+    } catch {
+      // silently fail
+    }
+  }
 
   useEffect(() => {
     if (token) {
+      load(token)
       fetchTasks(token)
       fetchWorkspaces(token)
     }
@@ -428,7 +434,7 @@ export default function App() {
       headers: { 'Content-Type': 'application/json', Authorization: token },
       body: JSON.stringify({ description }),
     })
-    load()
+    load(token)
   }
 
   const startEdit = (p) => {
@@ -443,7 +449,7 @@ export default function App() {
       body: JSON.stringify({ description: editValue }),
     })
     setEditingId(null)
-    load()
+    load(token)
   }
 
   const handleKeyDown = (e, id) => {
