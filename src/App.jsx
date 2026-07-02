@@ -478,7 +478,7 @@ export default function App() {
     <>
       <div style={{ fontFamily: 'sans-serif', maxWidth: 600, margin: '2rem auto', padding: '0 1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ margin: 0 }}>Tracker</h1>
+          <h1 style={{ margin: 0 }}>Time Tracker</h1>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {token && workspaces.length > 0 && (
               <button
@@ -532,7 +532,7 @@ export default function App() {
           />
         )}
 
-        <div style={{ marginTop: '1.5rem' }}>
+        {token && <div style={{ marginTop: '1.5rem' }}>
           {canStart ? (
             <button onClick={() => start()} style={{ fontSize: '1rem', padding: '0.5rem 1.5rem' }}>
               Start Timebox
@@ -560,7 +560,11 @@ export default function App() {
               </div>
             </div>
           )}
-        </div>
+        </div>}
+
+        {!token && <p style={{ marginTop: '1.5rem', color: '#666', textAlign: 'center' }}>
+          Accedi per visualizzare i timebox e iniziare a tracciarli.
+        </p>}
 
         {Object.entries(groups)
           .sort((a, b) => b[0].localeCompare(a[0]))
