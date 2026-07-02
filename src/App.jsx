@@ -54,6 +54,23 @@ function Tomato() {
   )
 }
 
+function DayRow({ day, items, onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+    >
+      <span style={{ fontSize: '0.95rem', color: '#666', minWidth: 115 }}>
+        <span style={{ background: '#f0f0f0', padding: '0.2rem 0.5rem', borderRadius: 8, fontWeight: 600, color: '#444', width: 50, display: 'inline-block', textAlign: 'center' }}>{dayOfWeek(day)}</span>{' '}
+        <span style={{ background: '#f0f0f0', padding: '0.2rem 0.5rem', borderRadius: 8 }}>{day}</span>
+      </span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
+        {items.map((_, i) => <Tomato key={i} />)}
+      </div>
+    </div>
+  )
+}
+
 function taskLabel(task) {
   if (typeof task === 'string') return task
   return task.name ?? task.title ?? task.description ?? JSON.stringify(task)
@@ -358,10 +375,18 @@ function WorkspaceModal({ workspaces, token, onClose, onSwitch }) {
   )
 }
 
+function todayKeyInit() {
+  const d = new Date()
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 export default function App() {
   const [timeboxes, setTimeboxes] = useState([])
   const [now, setNow] = useState(Date.now())
+  const [route, setRoute] = useState('/')
   const [editingId, setEditingId] = useState(null)
+  const [dateFrom, setDateFrom] = useState(todayKeyInit)
+  const [dateTo, setDateTo] = useState(todayKeyInit)
   const [editValue, setEditValue] = useState('')
   const [showLogin, setShowLogin] = useState(false)
   const [showTasks, setShowTasks] = useState(false)
@@ -413,6 +438,13 @@ export default function App() {
       fetchWorkspaces(token)
     }
   }, [token])
+
+  useEffect(() => {
+    if (route !== '/') {
+      setDateFrom(route)
+      setDateTo(route)
+    }
+  }, [route])
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000)
@@ -471,8 +503,15 @@ export default function App() {
   }
 
   const groups = token ? groupByDay(timeboxes) : {}
-  const todayKey = `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}-${pad(new Date().getDate())}`
+  const todayKey = todayKeyInit()
   if (token && !(todayKey in groups)) groups[todayKey] = []
+
+  const filteredItems = route !== '/'
+    ? Object.entries(groups)
+      .filter(([day]) => day >= dateFrom && day <= dateTo)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .flatMap(([day, items]) => items.map((p) => ({ ...p, _day: day })))
+    : []
 
   return (
     <>
@@ -566,61 +605,105 @@ export default function App() {
           Accedi per visualizzare i timebox e iniziare a tracciarli.
         </p>}
 
-        {Object.entries(groups)
-          .sort((a, b) => b[0].localeCompare(a[0]))
-          .map(([day, items]) => (
-            <section key={day} style={{ marginTop: '8px' }}>
-              {day === todayKey ? (
-                <>
-                  <h2 style={{ marginBottom: '1rem' }}>{day} — {items.length} timebox{items.length === 1 ? '' : 'es'}</h2>
-                  <ul style={{ paddingLeft: 0, listStyle: 'none', marginBottom: '1rem' }}>
-                    {items.map((p) => (
-                      <li
-                        key={p.id}
-                        onDoubleClick={() => startEdit(p)}
-                        style={{
-                          cursor: 'pointer', padding: '0.25rem 0.5rem', borderRadius: 4,
-                          ...(last && p.id === last.id ? {
-                            background: '#fffbea',
-                            borderLeft: '3px solid #f59e0b',
-                            paddingLeft: '0.75rem',
-                            fontWeight: 600,
-                          } : { borderLeft: '3px solid transparent', paddingLeft: '0.75rem' }),
-                        }}
-                      >
-                        {editingId === p.id ? (
-                          <>
-                            <span
-                              style={{ marginRight: '0.5rem' }}>{formatTime(p.started_at)} —</span>
-                            <input
-                              autoFocus
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              onKeyDown={(e) => handleKeyDown(e, p.id)}
-                              onBlur={() => setEditingId(null)}
-                              style={{ fontSize: 'inherit', width: '60%' }}
-                            />
-                          </>
-                        ) : (
-                          <>{formatTime(p.started_at)}{p.description ? ` — ${p.description}` : ''}</>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '0.95rem', color: '#666', minWidth: 115 }}>
-                    <span style={{ background: '#f0f0f0', padding: '0.2rem 0.5rem', borderRadius: 8, fontWeight: 600, color: '#444', width: 50, display: 'inline-block', textAlign: 'center' }}>{dayOfWeek(day)}</span>{' '}
-                    <span style={{ background: '#f0f0f0', padding: '0.2rem 0.5rem', borderRadius: 8 }}>{day}</span>
-                  </span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                    {items.map((_, i) => <Tomato key={i} />)}
-                  </div>
-                </div>
+        {route !== '/' ? (
+          <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setRoute('/')}
+                style={{ fontSize: '0.9rem', cursor: 'pointer' }}
+              >
+                ← Indietro
+              </button>
+              <label style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                Dal
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  style={{ fontSize: '0.9rem', padding: '0.2rem 0.4rem', borderRadius: 4, border: '1px solid #ccc' }}
+                />
+              </label>
+              <label style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                Al
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  style={{ fontSize: '0.9rem', padding: '0.2rem 0.4rem', borderRadius: 4, border: '1px solid #ccc' }}
+                />
+              </label>
+            </div>
+            <h2 style={{ marginBottom: '1rem' }}>
+              {filteredItems.length} timebox{filteredItems.length === 1 ? '' : 'es'}
+            </h2>
+            <ul style={{ paddingLeft: 0, listStyle: 'none', marginBottom: '1rem' }}>
+              {filteredItems.map((p) => (
+                <li
+                  key={p.id}
+                  style={{
+                    padding: '0.25rem 0.75rem',
+                    borderLeft: '3px solid transparent',
+                    borderRadius: 4,
+                  }}
+                >
+                  <span style={{ fontSize: '0.8rem', color: '#999', marginRight: '0.5rem' }}>{p._day}</span>
+                  {formatTime(p.started_at)}{p.description ? ` — ${p.description}` : ''}
+                </li>
+              ))}
+              {filteredItems.length === 0 && (
+                <li style={{ color: '#999', padding: '0.5rem 0' }}>Nessun timebox nel periodo selezionato</li>
               )}
-            </section>
-          ))}
+            </ul>
+          </div>
+        ) : (
+          Object.entries(groups)
+            .sort((a, b) => b[0].localeCompare(a[0]))
+            .map(([day, items]) => (
+              <section key={day} style={{ marginTop: '8px' }}>
+                {day === todayKey ? (
+                  <>
+                    <h2 style={{ marginBottom: '1rem' }}>{day} — {items.length} timebox{items.length === 1 ? '' : 'es'}</h2>
+                    <ul style={{ paddingLeft: 0, listStyle: 'none', marginBottom: '1rem' }}>
+                      {items.map((p) => (
+                        <li
+                          key={p.id}
+                          onDoubleClick={() => startEdit(p)}
+                          style={{
+                            cursor: 'pointer', padding: '0.25rem 0.5rem', borderRadius: 4,
+                            ...(last && p.id === last.id ? {
+                              background: '#fffbea',
+                              borderLeft: '3px solid #f59e0b',
+                              paddingLeft: '0.75rem',
+                              fontWeight: 600,
+                            } : { borderLeft: '3px solid transparent', paddingLeft: '0.75rem' }),
+                          }}
+                        >
+                          {editingId === p.id ? (
+                            <>
+                              <span
+                                style={{ marginRight: '0.5rem' }}>{formatTime(p.started_at)} —</span>
+                              <input
+                                autoFocus
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(e, p.id)}
+                                onBlur={() => setEditingId(null)}
+                                style={{ fontSize: 'inherit', width: '60%' }}
+                              />
+                            </>
+                          ) : (
+                            <>{formatTime(p.started_at)}{p.description ? ` — ${p.description}` : ''}</>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <DayRow day={day} items={items} onClick={() => { setRoute(day); setDateFrom(day); setDateTo(day) }} />
+                )}
+              </section>
+            ))
+        )}
       </div>
       <SGFooter />
     </>
