@@ -7,6 +7,7 @@ const DATA_URL = 'https://api.simonegentili.com/quadrato/data'
 const WORKSPACES_URL = 'https://api.simonegentili.com/quadrato/workspaces'
 const SET_WORKSPACE_URL = 'https://api.simonegentili.com/quadrato/workspace/current'
 const TOKEN_KEY = 'quadrato_token'
+const APP_VERSION = __APP_VERSION__
 
 function parseUTC(iso) {
   if (iso && !iso.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(iso)) {
@@ -58,13 +59,13 @@ function DayRow({ day, items, onClick }) {
   return (
     <div
       onClick={onClick}
-      style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+      style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', flexWrap: 'wrap' }}
     >
       <span style={{ fontSize: '0.95rem', color: '#666', minWidth: 115 }}>
         <span style={{ background: '#f0f0f0', padding: '0.2rem 0.5rem', borderRadius: 8, fontWeight: 600, color: '#444', width: 50, display: 'inline-block', textAlign: 'center' }}>{dayOfWeek(day)}</span>{' '}
         <span style={{ background: '#f0f0f0', padding: '0.2rem 0.5rem', borderRadius: 8 }}>{day}</span>
       </span>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem', flex: '1 1 auto', minWidth: 0 }}>
         {items.map((_, i) => <Tomato key={i} />)}
       </div>
     </div>
@@ -116,7 +117,8 @@ function LoginModal({ onClose, onSuccess }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#fff', borderRadius: 8, padding: '2rem', minWidth: 320,
+          background: '#fff', borderRadius: 8, padding: 'clamp(1.25rem, 5vw, 2rem)',
+          width: '90%', maxWidth: 320, boxSizing: 'border-box',
           boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
         }}
       >
@@ -185,8 +187,8 @@ function TaskModal({ tasks, canStart, onStart, onClose }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#fff', borderRadius: 8, padding: '1.5rem',
-          width: '90%', maxWidth: 540, maxHeight: '80vh',
+          background: '#fff', borderRadius: 8, padding: 'clamp(1rem, 5vw, 1.5rem)',
+          width: '90%', maxWidth: 540, maxHeight: '80vh', boxSizing: 'border-box',
           display: 'flex', flexDirection: 'column',
           boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
         }}
@@ -296,8 +298,8 @@ function WorkspaceModal({ workspaces, token, onClose, onSwitch }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#fff', borderRadius: 8, padding: '1.5rem',
-          width: '90%', maxWidth: 560, maxHeight: '80vh',
+          background: '#fff', borderRadius: 8, padding: 'clamp(1rem, 5vw, 1.5rem)',
+          width: '90%', maxWidth: 560, maxHeight: '80vh', boxSizing: 'border-box',
           display: 'flex', flexDirection: 'column',
           boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
         }}
@@ -527,9 +529,9 @@ export default function App() {
   return (
     <>
       <div style={{ fontFamily: 'sans-serif', maxWidth: 600, margin: '2rem auto', padding: '0 1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ margin: 0 }}>Time Tracker</h1>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <h1 style={{ margin: 0, fontSize: 'clamp(1.25rem, 5vw, 1.75rem)' }}>Time Tracker</h1>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {token && workspaces.length > 0 && (
               <button
                 onClick={() => setShowWorkspaces(true)}
@@ -603,7 +605,7 @@ export default function App() {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  style={{ fontSize: '0.9rem', padding: '0.2rem 0.4rem', borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ fontSize: '1rem', padding: '0.2rem 0.4rem', borderRadius: 4, border: '1px solid #ccc' }}
                 />
               </label>
               <label style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -612,7 +614,7 @@ export default function App() {
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  style={{ fontSize: '0.9rem', padding: '0.2rem 0.4rem', borderRadius: 4, border: '1px solid #ccc' }}
+                  style={{ fontSize: '1rem', padding: '0.2rem 0.4rem', borderRadius: 4, border: '1px solid #ccc' }}
                 />
               </label>
             </div>
@@ -667,7 +669,10 @@ export default function App() {
               <>
                 <div style={{ marginTop: '1.5rem' }}>
                   {canStart ? (
-                    <button onClick={() => start()} style={{ fontSize: '1rem', padding: '0.5rem 1.5rem' }}>
+                    <button
+                      onClick={() => start()}
+                      style={{ fontSize: '1rem', padding: '0.5rem 1.5rem', width: '100%' }}
+                    >
                       Start Timebox
                     </button>
                   ) : (
@@ -767,6 +772,10 @@ export default function App() {
             )}
           </>
         )}
+
+        <div style={{ fontSize: '13px', color: '#666', textAlign: 'center', marginTop: '16px' }}>
+          <strong>Versione:</strong> v{APP_VERSION}
+        </div>
       </div>
       <SGFooter />
     </>

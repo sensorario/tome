@@ -9,9 +9,7 @@ const { version } = JSON.parse(
 export default defineConfig({
   plugins: [react()],
   define: {
-    'process.env': {
-      __APP_VERSION__: JSON.stringify(version),
-    },
+    __APP_VERSION__: JSON.stringify(version),
   },
   server: {
     proxy: {
