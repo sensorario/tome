@@ -1,6 +1,6 @@
 {
   "name": "tracker-client",
-  "version": "2.0.46",
+  "version": "2.0.47",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@sensorario/sg-components": "^0.0.57",
+    "@sensorario/sg-components": "^0.0.67",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },

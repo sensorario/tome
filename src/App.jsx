@@ -1,4 +1,4 @@
-import { SGFooter, Authenticator } from '@sensorario/sg-components'
+import { SGFooter, Authenticator, Button } from '@sensorario/sg-components'
 import { useEffect, useState } from 'react'
 
 const MS_25_MIN = 25 * 60 * 1000
@@ -146,18 +146,17 @@ function LoginModal({ onClose, onSuccess }) {
             />
           </div>
           {error && <p style={{ color: 'red', margin: '0 0 1rem' }}>{error}</p>}
-          <button
+          <Button
             type="submit"
             disabled={loading}
+            label={loading ? 'Accesso…' : 'Accedi'}
             style={{
               width: '100%',
               padding: '0.6rem',
               fontSize: '1rem',
               cursor: loading ? 'default' : 'pointer'
             }}
-          >
-            {loading ? 'Accesso…' : 'Accedi'}
-          </button>
+          />
         </form>
       </div>
     </div>
@@ -200,14 +199,13 @@ function TaskModal({ tasks, canStart, onStart, onClose }) {
           marginBottom: '1rem'
         }}>
           <h2 style={{ margin: 0 }}>Task</h2>
-          <button onClick={onClose} style={{
+          <Button onClick={onClose} label="×" style={{
             background: 'none',
             border: 'none',
             fontSize: '1.4rem',
             cursor: 'pointer',
             lineHeight: 1
-          }}>×
-          </button>
+          }} />
         </div>
         <input
           autoFocus
@@ -236,21 +234,20 @@ function TaskModal({ tasks, canStart, onStart, onClose }) {
               }}
             >
               <span>{taskLabel(task)}</span>
-              <button
+              <Button
                 onClick={() => {
                   onStart(taskLabel(task));
                   onClose()
                 }}
                 disabled={!canStart}
+                label="START"
                 style={{
                   fontSize: '0.85rem',
                   padding: '0.25rem 0.75rem',
                   marginLeft: '1rem',
                   cursor: canStart ? 'pointer' : 'default'
                 }}
-              >
-                START
-              </button>
+              />
             </li>
           ))}
         </ul>
@@ -311,14 +308,13 @@ function WorkspaceModal({ workspaces, token, onClose, onSwitch }) {
           marginBottom: '1rem'
         }}>
           <h2 style={{ margin: 0 }}>Workspace</h2>
-          <button onClick={onClose} style={{
+          <Button onClick={onClose} label="×" style={{
             background: 'none',
             border: 'none',
             fontSize: '1.4rem',
             cursor: 'pointer',
             lineHeight: 1
-          }}>×
-          </button>
+          }} />
         </div>
         <input
           autoFocus
@@ -358,17 +354,16 @@ function WorkspaceModal({ workspaces, token, onClose, onSwitch }) {
                   }}>{ws.tasks_expired} scadut{ws.tasks_expired === 1 ? 'o' : 'i'}</span>}
                 </div>
               </div>
-              <button
+              <Button
                 onClick={() => handleSelect(ws.name)}
                 disabled={ws.current || loading !== null}
+                label={loading === ws.name ? '…' : 'Seleziona'}
                 style={{
                   fontSize: '0.85rem', padding: '0.25rem 0.75rem', marginLeft: '1rem',
                   cursor: ws.current || loading !== null ? 'default' : 'pointer',
                   opacity: ws.current ? 0.4 : 1,
                 }}
-              >
-                {loading === ws.name ? '…' : 'Seleziona'}
-              </button>
+              />
             </li>
           ))}
         </ul>
@@ -397,6 +392,7 @@ export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [tasks, setTasks] = useState([])
   const [workspaces, setWorkspaces] = useState([])
+  const [startError, setStartError] = useState(null)
 
   const fetchTasks = async (tok) => {
     try {
@@ -426,6 +422,11 @@ export default function App() {
       const res = await fetch('https://api.simonegentili.com/tome/timeboxes', {
         headers: { Authorization: tok },
       })
+      if (res.status === 401) {
+        handleLogout()
+        setShowLogin(true)
+        return
+      }
       if (!res.ok) return
       const data = await res.json()
       setTimeboxes(Array.isArray(data) ? data : [])
@@ -462,12 +463,26 @@ export default function App() {
   const countdown = `${pad(Math.floor(remaining / 60))}:${pad(remaining % 60)}`
 
   const start = async (description = '') => {
-    await fetch('https://api.simonegentili.com/tome/timeboxes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: token },
-      body: JSON.stringify({ description }),
-    })
-    load(token)
+    try {
+      const res = await fetch('https://api.simonegentili.com/tome/timeboxes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: token },
+        body: JSON.stringify({ description }),
+      })
+      if (res.status === 401) {
+        handleLogout()
+        setShowLogin(true)
+        return
+      }
+      if (!res.ok) {
+        setStartError('Impossibile avviare il timebox. Riprova.')
+        return
+      }
+      setStartError(null)
+      load(token)
+    } catch {
+      setStartError('Impossibile avviare il timebox. Riprova.')
+    }
   }
 
   const startEdit = (p) => {
@@ -533,20 +548,18 @@ export default function App() {
           <h1 style={{ margin: 0, fontSize: 'clamp(1.25rem, 5vw, 1.75rem)' }}>Time Tracker</h1>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {token && workspaces.length > 0 && (
-              <button
+              <Button
                 onClick={() => setShowWorkspaces(true)}
+                label={workspaces.find((w) => w.current)?.name ?? 'Workspace'}
                 style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}
-              >
-                {workspaces.find((w) => w.current)?.name ?? 'Workspace'}
-              </button>
+              />
             )}
             {token && tasks.length > 0 && (
-              <button
+              <Button
                 onClick={() => setShowTasks(true)}
+                label={`Task (${tasks.length})`}
                 style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}
-              >
-                Task ({tasks.length})
-              </button>
+              />
             )}
             <Authenticator
               isLoggedIn={!!token}
@@ -593,12 +606,11 @@ export default function App() {
         {token && route !== '/' ? (
           <div style={{ marginTop: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-              <button
+              <Button
                 onClick={() => setRoute('/')}
+                label="← Indietro"
                 style={{ fontSize: '0.9rem', cursor: 'pointer' }}
-              >
-                ← Indietro
-              </button>
+              />
               <label style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 Dal
                 <input
@@ -644,9 +656,10 @@ export default function App() {
           <>
             <div style={{ display: 'flex', gap: 0, marginTop: '1.5rem', borderBottom: '2px solid #e5e7eb' }}>
               {['oggi', 'storico'].map((tab) => (
-                <button
+                <Button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
+                  label={tab}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -659,22 +672,22 @@ export default function App() {
                     cursor: 'pointer',
                     textTransform: 'capitalize',
                   }}
-                >
-                  {tab}
-                </button>
+                />
               ))}
             </div>
 
             {activeTab === 'oggi' && (
               <>
                 <div style={{ marginTop: '1.5rem' }}>
+                  {startError && (
+                    <p style={{ color: 'red', margin: '0 0 0.5rem', fontSize: '0.9rem' }}>{startError}</p>
+                  )}
                   {canStart ? (
-                    <button
+                    <Button
                       onClick={() => start()}
+                      label="Start Timebox"
                       style={{ fontSize: '1rem', padding: '0.5rem 1.5rem', width: '100%' }}
-                    >
-                      Start Timebox
-                    </button>
+                    />
                   ) : (
                     <div>
                       <div style={{
@@ -734,16 +747,15 @@ export default function App() {
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <span>{formatTime(p.started_at)}{p.description ? ` — ${p.description}` : ''}</span>
                             {canStart && repeatableIds.has(p.id) && (
-                              <button
+                              <Button
                                 onClick={(e) => { e.stopPropagation(); start(p.description ?? '') }}
                                 title="Ripeti questo task"
+                                label="↺"
                                 style={{
                                   background: 'none', border: 'none', cursor: 'pointer',
                                   fontSize: '1rem', padding: '0 0.25rem', color: '#999', lineHeight: 1,
                                 }}
-                              >
-                                ↺
-                              </button>
+                              />
                             )}
                           </div>
                         )}
