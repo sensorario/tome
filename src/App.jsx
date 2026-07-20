@@ -273,7 +273,7 @@ function WorkspaceModal({ workspaces, token, onClose, onSwitch }) {
     try {
       await fetch(SET_WORKSPACE_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: token },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name }),
       })
       onSwitch()
@@ -396,7 +396,7 @@ export default function App() {
 
   const fetchTasks = async (tok) => {
     try {
-      const res = await fetch(DATA_URL, { headers: { Authorization: tok } })
+      const res = await fetch(DATA_URL, { headers: { Authorization: `Bearer ${tok}` } })
       if (!res.ok) return
       const data = await res.json()
       setTasks((data['simplanner-tasks'] ?? []).filter((t) => !t.archived))
@@ -407,7 +407,7 @@ export default function App() {
 
   const fetchWorkspaces = async (tok) => {
     try {
-      const res = await fetch(WORKSPACES_URL, { headers: { Authorization: tok } })
+      const res = await fetch(WORKSPACES_URL, { headers: { Authorization: `Bearer ${tok}` } })
       if (!res.ok) return
       const data = await res.json()
       setWorkspaces(data.workspaces ?? [])
@@ -420,7 +420,7 @@ export default function App() {
     if (!tok) return
     try {
       const res = await fetch('https://api.simonegentili.com/tome/timeboxes', {
-        headers: { Authorization: tok },
+        headers: { Authorization: `Bearer ${tok}` },
       })
       if (res.status === 401) {
         handleLogout()
@@ -466,7 +466,7 @@ export default function App() {
     try {
       const res = await fetch('https://api.simonegentili.com/tome/timeboxes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: token },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ description }),
       })
       if (res.status === 401) {
@@ -493,7 +493,7 @@ export default function App() {
   const saveEdit = async (id) => {
     await fetch(`https://api.simonegentili.com/tome/timeboxes/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: token },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ description: editValue }),
     })
     setEditingId(null)
