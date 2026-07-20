@@ -1,4 +1,4 @@
-import { SGFooter, Authenticator, Button } from '@sensorario/sg-components'
+import { SGFooter, QuadratoHeader, Button } from '@sensorario/sg-components'
 import { useEffect, useState } from 'react'
 
 const MS_25_MIN = 25 * 60 * 1000
@@ -6,8 +6,26 @@ const AUTH_URL = 'https://api.simonegentili.com/quadrato/authenticate'
 const DATA_URL = 'https://api.simonegentili.com/quadrato/data'
 const WORKSPACES_URL = 'https://api.simonegentili.com/quadrato/workspaces'
 const SET_WORKSPACE_URL = 'https://api.simonegentili.com/quadrato/workspace/current'
-const TOKEN_KEY = 'quadrato_token'
+// Cookie condiviso su .simonegentili.com: un utente già autenticato su un
+// altro prodotto della famiglia (es. quadrato) risulta loggato anche qui.
+const COOKIE_NAME = 'simonegentili.com-access-token'
+const USERNAME_KEY = 'simonegentili.com-username'
 const APP_VERSION = __APP_VERSION__
+
+function getAuthCookie() {
+  return document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith(`${COOKIE_NAME}=`))
+    ?.slice(COOKIE_NAME.length + 1) || null
+}
+
+function setAuthCookie(token) {
+  document.cookie = `${COOKIE_NAME}=${token}; path=/; domain=.simonegentili.com; secure; samesite=strict`
+}
+
+function clearAuthCookie() {
+  document.cookie = `${COOKIE_NAME}=; path=/; domain=.simonegentili.com; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`
+}
 
 function parseUTC(iso) {
   if (iso && !iso.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(iso)) {
@@ -75,92 +93,6 @@ function DayRow({ day, items, onClick }) {
 function taskLabel(task) {
   if (typeof task === 'string') return task
   return task.name ?? task.title ?? task.description ?? JSON.stringify(task)
-}
-
-function LoginModal({ onClose, onSuccess }) {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      const res = await fetch(AUTH_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
-      if (!res.ok) {
-        setError('Credenziali non valide');
-        setLoading(false);
-        return
-      }
-      const { token } = await res.json()
-      onSuccess(token)
-    } catch {
-      setError('Errore di rete')
-    }
-    setLoading(false)
-  }
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: '#fff', borderRadius: 8, padding: 'clamp(1.25rem, 5vw, 2rem)',
-          width: '90%', maxWidth: 320, boxSizing: 'border-box',
-          boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
-        }}
-      >
-        <h2 style={{ marginTop: 2, marginBottom: '2rem' }}>Accedi</h2>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: 4, fontSize: '0.9rem' }}>Username</label>
-            <input
-              autoFocus
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={{ width: '100%', padding: '0.45rem', fontSize: '1rem', boxSizing: 'border-box' }}
-              required
-            />
-          </div>
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', marginBottom: 4, fontSize: '0.9rem' }}>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '0.45rem', fontSize: '1rem', boxSizing: 'border-box' }}
-              required
-            />
-          </div>
-          {error && <p style={{ color: 'red', margin: '0 0 1rem' }}>{error}</p>}
-          <Button
-            type="submit"
-            disabled={loading}
-            label={loading ? 'Accesso…' : 'Accedi'}
-            style={{
-              width: '100%',
-              padding: '0.6rem',
-              fontSize: '1rem',
-              cursor: loading ? 'default' : 'pointer'
-            }}
-          />
-        </form>
-      </div>
-    </div>
-  )
 }
 
 function TaskModal({ tasks, canStart, onStart, onClose }) {
@@ -386,10 +318,10 @@ export default function App() {
   const [dateFrom, setDateFrom] = useState(todayKeyInit)
   const [dateTo, setDateTo] = useState(todayKeyInit)
   const [editValue, setEditValue] = useState('')
-  const [showLogin, setShowLogin] = useState(false)
   const [showTasks, setShowTasks] = useState(false)
   const [showWorkspaces, setShowWorkspaces] = useState(false)
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
+  const [token, setToken] = useState(() => getAuthCookie())
+  const [username, setUsername] = useState(() => localStorage.getItem(USERNAME_KEY))
   const [tasks, setTasks] = useState([])
   const [workspaces, setWorkspaces] = useState([])
   const [startError, setStartError] = useState(null)
@@ -424,7 +356,6 @@ export default function App() {
       })
       if (res.status === 401) {
         handleLogout()
-        setShowLogin(true)
         return
       }
       if (!res.ok) return
@@ -471,7 +402,6 @@ export default function App() {
       })
       if (res.status === 401) {
         handleLogout()
-        setShowLogin(true)
         return
       }
       if (!res.ok) {
@@ -505,15 +435,27 @@ export default function App() {
     if (e.key === 'Escape') setEditingId(null)
   }
 
-  const handleLoginSuccess = (tok) => {
-    localStorage.setItem(TOKEN_KEY, tok)
+  const handleLogin = async (loginUsername, password) => {
+    const res = await fetch(AUTH_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: loginUsername, password }),
+    })
+    if (!res.ok) {
+      throw new Error('Authentication failed')
+    }
+    const { token: tok } = await res.json()
+    localStorage.setItem(USERNAME_KEY, loginUsername)
+    setAuthCookie(tok)
+    setUsername(loginUsername)
     setToken(tok)
-    setShowLogin(false)
   }
 
   const handleLogout = () => {
-    localStorage.removeItem(TOKEN_KEY)
+    clearAuthCookie()
+    localStorage.removeItem(USERNAME_KEY)
     setToken(null)
+    setUsername(null)
     setTasks([])
     setWorkspaces([])
   }
@@ -544,36 +486,30 @@ export default function App() {
   return (
     <>
       <div style={{ fontFamily: 'sans-serif', maxWidth: 600, margin: '2rem auto', padding: '0 1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <h1 style={{ margin: 0, fontSize: 'clamp(1.25rem, 5vw, 1.75rem)' }}>Time Tracker</h1>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {token && workspaces.length > 0 && (
+        <QuadratoHeader
+          title="Time Tracker"
+          username={username}
+          onLogin={handleLogin}
+          onLogout={handleLogout}
+        />
+
+        {(token && (workspaces.length > 0 || tasks.length > 0)) && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'wrap', margin: '0.5rem 0' }}>
+            {workspaces.length > 0 && (
               <Button
                 onClick={() => setShowWorkspaces(true)}
                 label={workspaces.find((w) => w.current)?.name ?? 'Workspace'}
                 style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}
               />
             )}
-            {token && tasks.length > 0 && (
+            {tasks.length > 0 && (
               <Button
                 onClick={() => setShowTasks(true)}
                 label={`Task (${tasks.length})`}
                 style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}
               />
             )}
-            <Authenticator
-              isLoggedIn={!!token}
-              handleLogin={() => setShowLogin(true)}
-              handleLogout={handleLogout}
-            />
           </div>
-        </div>
-
-        {showLogin && (
-          <LoginModal
-            onClose={() => setShowLogin(false)}
-            onSuccess={handleLoginSuccess}
-          />
         )}
 
         {showWorkspaces && (
